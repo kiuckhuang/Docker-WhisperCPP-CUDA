@@ -27,27 +27,33 @@ Follow these steps to get the API server up and running.
 
 First, clone this repository or create the project directory structure. Then, run the provided setup script to create the necessary directories and download a default speech-to-text model.
 
-\# This script creates the 'models' and 'samples' directories  
-\# and downloads the 'ggml-base.en.bin' model into the 'models' folder.  
+```BASH
+# This script creates the 'models' and 'samples' directories  
+# and downloads the 'ggml-base.en.bin' model into the 'models' folder. 
 bash setup.sh
+```
 
 ### **2\. Build and Launch the Service**
 
 Use docker-compose to build the Docker image and launch the container in the background.
 
 The first build will take some time as it needs to download the base images and compile whisper.cpp from source.
+```BASH
+# Build the image (use \--no-cache for the first time or after changes)  
+docker compose build --no-cache
+```
 
-\# Build the image (use \--no-cache for the first time or after changes)  
-docker compose build \--no-cache
-
-\# Start the service in detached mode  
-docker compose up \-d
+```BASH
+# Start the service in detached mode  
+docker compose up -d
+```
 
 ### **3\. Verify the Service**
 
 You can check the container logs to ensure it started correctly and detected the GPU.
-
-docker compose logs \-f
+```BASH
+docker compose logs -f
+```
 
 You should see output indicating that the CUDA device was found and the server is listening on port 8080\.
 
@@ -61,14 +67,30 @@ main: server listening on 0.0.0.0:8080
 
 Place a sample audio file (e.g., myaudio.wav) inside the samples directory. You can then use curl or any other client to send a request to the /inference endpoint.
 
-curl \--request POST \\  
-  \--url http://localhost:8080/inference \\  
-  \--header 'Content-Type: multipart/form-data' \\  
-  \--form 'file=@"samples/myaudio.wav"'
+```BASH
+#/inference
+curl 127.0.0.1:8080/inference \
+-H "Content-Type: multipart/form-data" \
+-F file="@<file-path>" \
+-F temperature="0.0" \
+-F temperature_inc="0.2" \
+-F response_format="json"
+       
+```
+
+Use /load to load another model
+```BASH
+#/load
+curl 127.0.0.1:8080/load \
+-H "Content-Type: multipart/form-data" \
+-F model="<path-to-model-file>"
+```
+
 
 The API will return a JSON object containing the transcribed text.
-
+```JSON
 {"text": " This is a test audio file.", ...}
+```
 
 ## **Configuration**
 
@@ -78,16 +100,17 @@ To use a different model, download the desired .bin file from the [ggml Hugging 
 
 Then, update the command section in your docker-compose.yml file to point to the new model file:
 
-\# docker-compose.yml  
+```YAML
+# docker-compose.yml  
 services:  
   whisper-api:  
-    \# ...  
+    # ...  
     command:  
-      \- "./server"  
-      \- "-m"  
-      \- "/models/ggml-medium.en.bin" \# \<-- Change this line  
-      \# ...
-
+      - "./server"  
+      - "-m"  
+      - "/models/ggml-medium.en.bin" # \<-- Change this line  
+      # ...
+```
 After saving the change, restart the service to apply it: docker compose up \-d \--force-recreate.
 
 ### **Service Management**

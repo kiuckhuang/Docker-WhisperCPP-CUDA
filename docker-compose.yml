@@ -1,0 +1,39 @@
+# Docker Compose configuration for the Whisper.cpp API service.
+services:
+  whisper-api:
+    # Build the Docker image using the Dockerfile in the current directory.
+    build: .
+    # Assign a custom name to the container for easier management.
+    container_name: whisper_cpp_cuda_api
+    # Automatically restart the container unless it is manually stopped.
+    restart: unless-stopped
+    ports:
+      # Map port 8080 of the host to port 8080 in the container.
+      - "8080:8080"
+    volumes:
+      # Mount the local 'models' directory to '/models' inside the container.
+      - ./${MODELS_DIR:-models}:/models
+      # Mount the local 'samples' directory for easy testing.
+      - ./${SAMPLES_DIR:-samples}:/samples
+    command:
+      - "./server"
+      - "-m"
+      - "/models/${MODEL_FILENAME:-ggml-base.en.bin}" # Model to use.
+      - "--host"
+      - "0.0.0.0" # Listen on all network interfaces.
+      - "--port"
+      - "8080"
+      # Optional Flags: Uncomment to use.
+      - "--flash-attn"  # Use Flash Attention for potentially faster processing.
+      - "--threads"     # Number of CPU threads to use.
+      - "4"
+
+    # GPU Resource Allocation
+    deploy:
+      resources:
+        reservations:
+          devices:
+            # Request access to one NVIDIA GPU.
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
