@@ -16,7 +16,7 @@ services:
       # Mount the local 'samples' directory for easy testing.
       - ./${SAMPLES_DIR:-samples}:/samples
     command:
-      - "./server"
+      - "./whisper-server"
       - "-m"
       - "/models/${MODEL_FILENAME:-ggml-base.en.bin}" # Model to use.
       - "--host"
